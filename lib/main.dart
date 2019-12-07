@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_vgu/ui/card.dart';
 
-void main() => runApp(MyApp());
+import 'api/network.dart';
+import 'models/news_model.dart';
+
+void main() {
+  getData();
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Flutter VGU',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -25,39 +32,46 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.display1,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
+      body: StreamBuilder(
+        stream: controller.stream,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return buildListSliver(snapshot.data, context);
+          } else if (snapshot.hashCode.toString() == 'apiKeyMissing') {
+            return Center(
+              child: Text('Oppps! Error server'),
+            );
+          } else {
+            return Container(
+              padding: EdgeInsets.all(20),
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+        },
       ),
     );
+  }
+
+  Widget buildListSliver(NewsModel values, BuildContext context) {
+    if (values.articles.length == 0) {
+      return Container(
+        padding: EdgeInsets.all(20),
+        child: Center(
+            child: Text('You didn\'t like anything',
+                style: TextStyle(color: Theme.of(context).accentColor, fontSize: 24))),
+      );
+    } else {
+      return ListView(
+        children: values.articles.map((k) => ListItem(k)).toList(),
+      );
+    }
   }
 }
